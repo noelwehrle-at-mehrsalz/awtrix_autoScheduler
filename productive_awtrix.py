@@ -95,6 +95,16 @@ HEADERS = {
 }
 
 # -------------------------------------------------------------------
+# Mögliche Anzeige-Namen für die Felder
+# -------------------------------------------------------------------
+FIELD_LABELS = {
+    "total_recognized_revenue": "Umsatz",
+    "total_cost": "Kosten",
+    "total_recognized_profit": "Profit"
+    # Füge hier bei Bedarf weitere oder abweichende Namen hinzu
+}
+
+# -------------------------------------------------------------------
 # Hilfsfunktionen
 # -------------------------------------------------------------------
 
@@ -186,7 +196,6 @@ def create_awtrix_payload(data: List[dict]) -> List[dict]:
     Wandelt die formatierten Daten in das Format um,
     das AWTRIX 3 erwartet.
 
-    Neu gewünscht:
     - pro Feldname ein eigenes Objekt (spalte)
     - pro Wert ein eigenes Objekt (wert)
     - 'text' = spaltenname / wert
@@ -197,9 +206,12 @@ def create_awtrix_payload(data: List[dict]) -> List[dict]:
     payload = []
     for entry in data:
         for field_name, field_value in entry.items():
+            # Auslesen des Anzeige-Namens, falls vorhanden
+            display_name = FIELD_LABELS.get(field_name, field_name)
+
             # Feldname in weiß
             payload.append({
-                "text": field_name,
+                "text": display_name,
                 "duration": 5,
                 "color": "#FFFFFF",
                 "noScroll": False
