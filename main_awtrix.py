@@ -28,12 +28,54 @@ if not (PRODUCTIVE_API_KEY and PRODUCTIVE_ORG_ID and AWTRIX_IP):
 
 APPS_DIR = "./apps"
 
+# Datei, in der wir den letzten Stand bekannter Apps speichern.
+KNOWN_APPS_FILE = "known_apps.json"
+
 # Unser Scheduler-Objekt global definieren
 scheduler = BlockingScheduler()
 
-def load_apps_from_folder(folder_path=APPS_DIR):
-    import os
+#####################
+# Hilfsfunktionen
+#####################
 
+def load_known_apps():
+    """Lädt eine Liste bekannter App-Namen aus known_apps.json."""
+    if not os.path.exists(KNOWN_APPS_FILE):
+        return set()
+    try:
+        with open(KNOWN_APPS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return set(data)
+    except (json.JSONDecodeError, IOError) as e:
+        logging.warning(f"Fehler beim Laden von {KNOWN_APPS_FILE}: {e}")
+        return set()
+
+
+def save_known_apps(apps_list):
+    """Speichert die Liste bekannter App-Namen in known_apps.json."""
+    try:
+        with open(KNOWN_APPS_FILE, "w", encoding="utf-8") as f:
+            json.dump(list(apps_list), f, ensure_ascii=False, indent=2)
+    except IOError as e:
+        logging.warning(f"Fehler beim Speichern von {KNOWN_APPS_FILE}: {e}")
+
+
+def remove_awtrix_app(app_name: str):
+    """
+    Schickt eine komplett leere Payload an AWTRIX, um die App zu löschen.
+    Siehe Doku: http://[IP]/api/custom?name=[appname] (Empty Body => Remove)
+    """
+    url = f"http://{AWTRIX_IP}/api/custom?name={app_name}"
+    try:
+        logging.info(f"Entferne App '{app_name}' von der AWTRIX...")
+        response = requests.post(url, data="", headers={"Content-Type": "application/json"}, timeout=5)
+        response.raise_for_status()
+        logging.info(f"App '{app_name}' erfolgreich entfernt.")
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Fehler beim Entfernen von App '{app_name}': {e}")
+
+
+def load_apps_from_folder(folder_path=APPS_DIR):
     if not os.path.isdir(folder_path):
         logging.warning(f"Ordner '{folder_path}' existiert nicht.")
         return
@@ -51,6 +93,7 @@ def load_apps_from_folder(folder_path=APPS_DIR):
             except Exception as e:
                 logging.error(f"Fehler beim Laden von {filename}: {e}")
 
+
 def send_to_awtrix(payload, app_name):
     url = f"http://{AWTRIX_IP}/api/custom?name={app_name}"
     try:
@@ -61,15 +104,31 @@ def send_to_awtrix(payload, app_name):
     except requests.exceptions.RequestException as e:
         logging.error(f"Fehler beim Senden an AWTRIX '{app_name}': {e}")
 
+#####################
+# Haupt-Update-Funktion
+#####################
+
 def update_awtrix_apps():
+    """
+    Lädt alle Apps (Module) und ruft get_payload() auf.
+    - Speichert aktuelle Apps in current_apps.
+    - Prüft, ob aus known_apps welche entfernt wurden => schickt Leer-Payload
+    - Speichert neue known_apps.
+    """
     logging.info("Starte Aktualisierung aller Apps...")
 
+    known_apps = load_known_apps()
+    current_apps = set()
+
     any_app_found = False
+
     for module in load_apps_from_folder(APPS_DIR):
         if hasattr(module, "get_payload") and callable(module.get_payload):
             try:
                 app_name, payload = module.get_payload()
+                # Payload senden
                 send_to_awtrix(payload, app_name)
+                current_apps.add(app_name)
                 any_app_found = True
             except Exception as e:
                 logging.error(f"Fehler in Modul {module}: {e}")
@@ -78,6 +137,18 @@ def update_awtrix_apps():
 
     if not any_app_found:
         logging.warning("Keine Apps gefunden oder keine gültige get_payload-Funktion.")
+
+    # Herausfinden, welche Apps nicht mehr existieren
+    removed_apps = known_apps - current_apps
+    for old_app in removed_apps:
+        remove_awtrix_app(old_app)
+
+    # Speichern
+    save_known_apps(current_apps)
+
+#####################
+# Scheduler-Thread
+#####################
 
 def scheduler_thread():
     """
@@ -92,6 +163,10 @@ def scheduler_thread():
         pass
     logging.info("Scheduler-Thread beendet.")
 
+#####################
+# main
+#####################
+
 def main():
     """
     Main-Funktion:
@@ -102,7 +177,7 @@ def main():
     # 1) Einmaliges Update direkt
     update_awtrix_apps()
 
-    # 2) Scheduler-Thread starten
+    # 2) Scheduler-Thread starten (alle 10 Min)
     scheduler.add_job(update_awtrix_apps, 'interval', minutes=10)
     sched_thread = threading.Thread(target=scheduler_thread, daemon=True)
     sched_thread.start()
