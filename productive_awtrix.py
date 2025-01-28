@@ -96,13 +96,18 @@ def send_to_awtrix(payload, app_name):
 
 def remove_awtrix_app(app_name):
     """
-    Schickt eine leere Payload an AWTRIX, um eine App zu löschen.
+    Schickt eine komplett leere Payload an AWTRIX, um eine App zu löschen.
     """
     url = f"http://{AWTRIX_IP}/api/custom?name={app_name}"
     try:
         logging.info(f"Entferne App '{app_name}' von der AWTRIX...")
-        # Leeres Array oder leeres Object => App löschen
-        response = requests.post(url, json=[], timeout=5)
+        # Wirklich leerer Body => data="" (json= wird gar nicht genutzt)
+        response = requests.post(
+            url,
+            data="",  # <--- Leerer String, damit Body wirklich leer ist
+            headers={"Content-Type": "application/json"},
+            timeout=5
+        )
         response.raise_for_status()
         logging.info(f"App '{app_name}' erfolgreich entfernt.")
     except requests.exceptions.RequestException as e:
