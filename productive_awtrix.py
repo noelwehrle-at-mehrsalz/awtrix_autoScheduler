@@ -71,9 +71,6 @@ if not (PRODUCTIVE_API_KEY and PRODUCTIVE_ORG_ID and AWTRIX_IP):
 BASE_URL = "https://api.productive.io/api/v2/reports/"
 AWTRIX_URL = f"http://{AWTRIX_IP}/api/custom?name=Productive_Report"
 
-# Lokale Zwischenspeicherung für den Fall, dass AWTRIX nicht erreichbar ist
-PENDING_DATA_FILE = "awtrix_pending_data.json"
-
 # -------------------------------------------------------------------
 # API-Parameter (kannst du natürlich dynamischer gestalten)
 # -------------------------------------------------------------------
@@ -219,9 +216,6 @@ def create_awtrix_payload(data: List[dict]) -> List[dict]:
 def send_to_awtrix(payload: List[dict]) -> None:
     """
     Sendet das JSON-Array in einem POST-Request an die AWTRIX 3 API.
-    Wenn AWTRIX nicht erreichbar ist, speichert das Skript die Payload
-    in einer lokalen JSON-Datei, um sie beim nächsten Durchlauf erneut
-    zu versuchen.
     """
     try:
         logging.info(f"Sende Daten an AWTRIX: {AWTRIX_URL}")
@@ -230,54 +224,6 @@ def send_to_awtrix(payload: List[dict]) -> None:
         logging.info("Daten erfolgreich an AWTRIX gesendet.")
     except requests.exceptions.RequestException as e:
         logging.error(f"AWTRIX nicht erreichbar oder Fehler beim Senden: {e}")
-        store_pending_data(payload)
-
-def store_pending_data(payload: List[dict]) -> None:
-    """
-    Speichert das Payload in einer lokalen JSON-Datei,
-    falls der Versand an AWTRIX fehlgeschlagen ist.
-    """
-    try:
-        if os.path.exists(PENDING_DATA_FILE):
-            with open(PENDING_DATA_FILE, "r", encoding="utf-8") as f:
-                existing_data = json.load(f)
-        else:
-            existing_data = []
-        # Neue Daten hinten anhängen
-        existing_data.extend(payload)
-
-        with open(PENDING_DATA_FILE, "w", encoding="utf-8") as f:
-            json.dump(existing_data, f, ensure_ascii=False, indent=2)
-        logging.info(f"Payload lokal in {PENDING_DATA_FILE} zwischengespeichert.")
-    except Exception as e:
-        logging.error(f"Fehler beim Speichern der Pending-Daten: {e}")
-
-def send_pending_data_if_any() -> None:
-    """
-    Schickt ggf. zwischengespeicherte Daten an AWTRIX,
-    falls welche vorhanden sind.
-    """
-    if not os.path.exists(PENDING_DATA_FILE):
-        return  # Keine Pending-Daten
-
-    try:
-        with open(PENDING_DATA_FILE, "r", encoding="utf-8") as f:
-            pending_data = json.load(f)
-        if not pending_data:
-            return
-
-        logging.info("Sende zwischengespeicherte Daten an AWTRIX...")
-        response = requests.post(AWTRIX_URL, json=pending_data, timeout=5)
-        response.raise_for_status()
-
-        logging.info("Zwischengespeicherte Daten erfolgreich gesendet. Datei wird geleert.")
-        # Datei leeren oder löschen
-        open(PENDING_DATA_FILE, "w").close()
-
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Erneuter Fehler beim Senden der Pending-Daten: {e}")
-    except (IOError, json.JSONDecodeError) as e:
-        logging.error(f"Fehler beim Lesen der Pending-Daten: {e}")
 
 # -------------------------------------------------------------------
 # Hauptjob für den Scheduler
@@ -285,26 +231,25 @@ def send_pending_data_if_any() -> None:
 def job_fetch_and_send():
     """
     Job, der alle 10 Minuten ausgeführt wird:
-    1. Altdaten aus Pending-File senden (falls vorhanden)
-    2. Neue Daten von Productive abrufen und an AWTRIX senden
+    1. Neue Daten von Productive abrufen
+    2. Daten formatieren
+    3. An AWTRIX senden
     """
     logging.info("Starte Job: Fetch Productive-Daten und sende an AWTRIX.")
-    # 1) Versuche, alte Pending-Daten zu senden
-    send_pending_data_if_any()
 
-    # 2) Neue Daten holen
+    # 1) Neue Daten holen
     raw_data = fetch_all_data(CONFIG)
     if not raw_data:
         logging.warning("Keine oder fehlerhafte Daten aus Productive erhalten.")
         return
 
-    # 3) Formatieren
+    # 2) Formatieren
     cleaned_data = format_data(raw_data, CONFIG["fields"])
 
-    # 4) AWTRIX-Payload bauen
+    # 3) AWTRIX-Payload bauen
     payload = create_awtrix_payload(cleaned_data)
 
-    # 5) An AWTRIX senden
+    # 4) An AWTRIX senden
     send_to_awtrix(payload)
 
 # -------------------------------------------------------------------
