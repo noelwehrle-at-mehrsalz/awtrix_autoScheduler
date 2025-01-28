@@ -18,13 +18,11 @@ logging.basicConfig(
 
 load_dotenv()
 
-PRODUCTIVE_API_KEY = os.getenv("PRODUCTIVE_API_KEY")
-PRODUCTIVE_ORG_ID = os.getenv("PRODUCTIVE_ORG_ID")
 AWTRIX_IP = os.getenv("AWTRIX_IP")
 
-if not (PRODUCTIVE_API_KEY and PRODUCTIVE_ORG_ID and AWTRIX_IP):
-    logging.error("Fehlende .env-Einträge! Bitte PRODUCTIVE_API_KEY, PRODUCTIVE_ORG_ID und AWTRIX_IP definieren.")
-    exit(1)
+if not (AWTRIX_IP):
+    logging.error("Fehlende .env-Einträge! Bitte AWTRIX_IP definieren.")
+    exit(1) 
 
 APPS_DIR = "./apps"
 
