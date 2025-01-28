@@ -195,14 +195,14 @@ def build_awtrix_payload(data, fields_cfg):
             # Feldname in Weiß
             payload.append({
                 "text": label,
-                "duration": 5,
+                "duration": 4,
                 "color": "#FFFFFF",
                 "noScroll": False
             })
             # Feldwert in Gelb
             payload.append({
                 "text": field_val,
-                "duration": 5,
+                "duration": 6,
                 "color": "#FFFF00",
                 "noScroll": False
             })
