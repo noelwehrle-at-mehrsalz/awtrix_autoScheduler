@@ -128,4 +128,5 @@ dmypy.json
 
 #App management
 known_apps.json
-apps/
+apps/*
+!apps/.gitkeep
