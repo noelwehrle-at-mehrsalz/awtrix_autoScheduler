@@ -1,72 +1,72 @@
-# AWTRIX AutoScheduler
+# **AWTRIX AutoScheduler**  
 
-Dieses Skript lädt automatisch Apps aus dem `apps`-Ordner und sendet die dort definierte Payload an AWTRIX.
+This script automatically loads apps from the `apps` folder and sends the defined payloads to AWTRIX.  
 
-## Voraussetzungen
+## **Prerequisites**  
 
-- Python 3.x
-- Virtuelle Umgebung (empfohlen)
-- Abhängigkeiten aus `requirements.txt`
-- `.env` Datei mit den notwendigen Umgebungsvariablen
+- Python 3.x  
+- Virtual environment (recommended)  
+- Dependencies from `requirements.txt`  
+- `.env` file with the required environment variables  
 
-## Installation
+## **Installation**  
 
-1. Klone das Repository:
+1. Clone the repository:  
 
     ```sh
     git clone <repository-url>
     cd <repository-name>
     ```
 
-2. Erstelle eine virtuelle Umgebung und aktiviere sie:
+2. Create and activate a virtual environment:  
 
     ```sh
     python -m venv venv
-    source venv/bin/activate  # Auf Windows: venv\Scripts\activate
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
     ```
 
-3. Installiere die Abhängigkeiten:
+3. Install dependencies:  
 
     ```sh
     pip install -r requirements.txt
     ```
 
-4. Erstelle eine `.env` Datei im Hauptverzeichnis und füge die folgenden Einträge hinzu:
+4. Create a `.env` file in the root directory and add the following entries:  
 
-    ```env
-    AWTRIX_IP=<IP-Adresse deiner AWTRIX>
+    ```ini
+    AWTRIX_IP=<IP address of your AWTRIX>
     ```
 
-## Verwendung
+## **Usage**  
 
-1. Starte das Skript:
+1. Start the script:  
 
     ```sh
     python awtrix_autoScheduler.py
     ```
 
-2. Das Skript führt sofort ein Update durch und startet dann einen Scheduler, der alle 10 Minuten ein Update durchführt.
+2. The script will immediately perform an update and then start a scheduler that runs updates every 10 minutes.  
 
-3. Du kannst manuell ein Update auslösen oder das Skript beenden, indem du die folgenden Befehle in die Konsole eingibst:
-    - `u`: Manuelles Update
-    - `q`: Beenden des Skripts
+3. You can manually trigger an update or exit the script by entering the following commands in the console:  
+    - `u`: Manually trigger an update  
+    - `q`: Quit the script  
 
-## Struktur
+## **Structure**  
 
-- [`awtrix_autoScheduler.py`](./awtrix_autoScheduler.py): Hauptskript, das den Scheduler startet und die Updates verwaltet.
-- [`apps`](./apps): Verzeichnis, das die einzelnen App-Module enthält.
-- [`.env`](./.env): Datei mit den notwendigen Umgebungsvariablen.
-- [`requirements.txt`](./requirements.txt): Liste der Python-Abhängigkeiten.
+- [`awtrix_autoScheduler.py`](./awtrix_autoScheduler.py): The main script that starts the scheduler and manages updates.  
+- [`apps`](./apps): Directory containing individual app modules.  
+- [`.env`](./.env): File containing necessary environment variables.  
+- [`requirements.txt`](./requirements.txt): List of required Python dependencies.  
 
-## Funktionen
+## **Features**  
 
-### [`awtrix_autoScheduler.py`](awtrix_autoScheduler.py )
+### [`awtrix_autoScheduler.py`](awtrix_autoScheduler.py)  
 
-- `send_to_awtrix(payload, app_name)`: Sendet das Payload an die AWTRIX-App.
-- `update_awtrix_apps()`: Aktualisiert alle Apps, indem es die Payloads von den Modulen abruft und an AWTRIX sendet.
-- `scheduler_thread()`: Startet den Scheduler in einem eigenen Thread.
-- `main()`: Hauptfunktion, die das Skript steuert.
+- `send_to_awtrix(payload, app_name)`: Sends the payload to the specified AWTRIX IP.  
+- `update_awtrix_apps()`: Updates all apps by retrieving payloads from the modules and sending them to AWTRIX.  
+- `scheduler_thread()`: Starts the scheduler in a separate thread.  
+- `main()`: Main function that controls the script.  
 
-## Lizenz
+## **License**  
 
-Dieses Projekt ist unter der MIT-Lizenz lizenziert. Siehe die LICENSE Datei für Details.
+This project is licensed under the MIT License. See the LICENSE file for details.  
