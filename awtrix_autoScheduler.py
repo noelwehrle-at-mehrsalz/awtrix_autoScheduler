@@ -37,23 +37,23 @@ scheduler = BlockingScheduler()
 #####################
 
 def load_known_apps():
-    """Lädt eine Liste bekannter App-Namen aus known_apps.json."""
+    """Lädt ein Dictionary bekannter Apps aus known_apps.json."""
     if not os.path.exists(KNOWN_APPS_FILE):
-        return set()
+        return {}
     try:
         with open(KNOWN_APPS_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
-        return set(data)
+        return data
     except (json.JSONDecodeError, IOError) as e:
         logging.warning(f"Fehler beim Laden von {KNOWN_APPS_FILE}: {e}")
-        return set()
+        return {}
 
 
-def save_known_apps(apps_list):
-    """Speichert die Liste bekannter App-Namen in known_apps.json."""
+def save_known_apps(apps_dict):
+    """Speichert das Dictionary bekannter Apps in known_apps.json."""
     try:
         with open(KNOWN_APPS_FILE, "w", encoding="utf-8") as f:
-            json.dump(list(apps_list), f, ensure_ascii=False, indent=2)
+            json.dump(apps_dict, f, ensure_ascii=False, indent=2)
     except IOError as e:
         logging.warning(f"Fehler beim Speichern von {KNOWN_APPS_FILE}: {e}")
 
@@ -116,7 +116,7 @@ def update_awtrix_apps():
     logging.info("Starte Aktualisierung aller Apps...")
 
     known_apps = load_known_apps()
-    current_apps = set()
+    current_apps = {}
 
     any_app_found = False
 
@@ -124,9 +124,13 @@ def update_awtrix_apps():
         if hasattr(module, "get_payload") and callable(module.get_payload):
             try:
                 app_name, payload = module.get_payload()
+                #remove app before adding it again to resolve problems with multi object apps
+                if app_name in known_apps and not len(payload) == known_apps[app_name].get("objects", 0):
+                    remove_awtrix_app(app_name)
                 # Payload senden
                 send_to_awtrix(payload, app_name)
-                current_apps.add(app_name)
+                # Beispiel für das Hinzufügen zusätzlicher Informationen
+                current_apps[app_name] = {"objects": len(payload)}
                 any_app_found = True
             except Exception as e:
                 logging.error(f"Fehler in Modul {module}: {e}")
@@ -137,7 +141,7 @@ def update_awtrix_apps():
         logging.warning("Keine Apps gefunden oder keine gültige get_payload-Funktion.")
 
     # Herausfinden, welche Apps nicht mehr existieren
-    removed_apps = known_apps - current_apps
+    removed_apps = set(known_apps.keys()) - set(current_apps.keys())
     for old_app in removed_apps:
         remove_awtrix_app(old_app)
 
