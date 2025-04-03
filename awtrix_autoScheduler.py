@@ -10,6 +10,10 @@ import threading
 from dotenv import load_dotenv
 from apscheduler.schedulers.blocking import BlockingScheduler
 
+# Arbeitsverzeichnis auf Script-Verzeichnis setzen
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
