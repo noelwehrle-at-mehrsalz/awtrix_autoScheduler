@@ -190,19 +190,23 @@ def main():
 
     # 3) Eingabeschleife
     logging.info("Eingabemodus: (u=Update, q=Quit)")
-    while True:
-        cmd = input().strip().lower()
-        if cmd == "u":
-            logging.info("Manuelles Update ausgelöst...")
-            update_awtrix_apps()
-        elif cmd == "q":
-            logging.info("Beende Script aufgrund Nutzer-Eingabe...")
-            # Scheduler ordentlich beenden
-            scheduler.shutdown(wait=False)
-            # Thread beenden:
-            break
-        else:
-            logging.info("Unbekannter Befehl. (u=Update, q=Quit)")
+    try:
+        while True:
+            cmd = input().strip().lower()
+            if cmd == "u":
+                logging.info("Manuelles Update ausgelöst...")
+                update_awtrix_apps()
+            elif cmd == "q":
+                logging.info("Beende Script aufgrund Nutzer-Eingabe...")
+                # Scheduler ordentlich beenden
+                scheduler.shutdown(wait=False)
+                # Thread beenden:
+                break
+            else:
+                logging.info("Unbekannter Befehl. (u=Update, q=Quit)")
+    except KeyboardInterrupt:
+        logging.info("Beende Script aufgrund KeyboardInterrupt...")
+        scheduler.shutdown(wait=False)
 
     # Warten, bis der Scheduler-Thread wirklich durch ist:
     sched_thread.join()
