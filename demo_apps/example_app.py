@@ -1,4 +1,4 @@
-# apps/example_app.py
+# demo_apps/example_app.py
 
 """
 Beispiel-App-Skript für AWTRIX.

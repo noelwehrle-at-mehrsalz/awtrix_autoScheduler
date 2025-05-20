@@ -54,8 +54,9 @@ This script automatically loads apps from the `apps` folder and sends the define
 ## **Structure**  
 
 - [`awtrix_autoScheduler.py`](./awtrix_autoScheduler.py): The main script that starts the scheduler and manages updates.  
-- [`apps`](./apps): Directory containing individual app modules.  
-- [`.env`](./.env): File containing necessary environment variables.  
+- [`apps`](./apps): Directory containing individual app modules.
+- [`demo_apps/example_app.py`](./demo_apps/example_app.py): Sample app that can be copied into `apps`.
+- [`.env`](./.env): File containing necessary environment variables.
 - [`requirements.txt`](./requirements.txt): List of required Python dependencies.  
 
 ## **Features**  
